@@ -100,12 +100,12 @@ col1, col2 = st.columns(2)
 with col1:
     if st.button("Previous Challenge") and st.session_state.current_challenge > 0:
         st.session_state.current_challenge -= 1
-        st.experimental_rerun()
+        st.rerun()
 
 with col2:
     if st.button("Next Challenge") and st.session_state.current_challenge < len(challenges) - 1:
         st.session_state.current_challenge += 1
-        st.experimental_rerun()
+        st.rerun()
 
 # Progress indicator
 st.progress((st.session_state.current_challenge + 1) / len(challenges))
