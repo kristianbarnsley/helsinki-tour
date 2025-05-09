@@ -222,18 +222,27 @@ if not st.session_state.authenticated:
     st.title("Helsinki City Tour Challenge")
     st.write("Please enter your team password to begin:")
     
-    password = st.text_input("Team Password", type="password")
-    if st.button("Login"):
-        if password == ADMIN_PASSWORD:
+    def handle_login():
+        if st.session_state.password == ADMIN_PASSWORD:
             st.session_state.authenticated = True
             st.session_state.is_admin = True
-            st.rerun()
-        elif password in TEAM_PASSWORDS:
+        elif st.session_state.password in TEAM_PASSWORDS:
             st.session_state.authenticated = True
-            st.session_state.team_name = TEAM_PASSWORDS[password]
-            st.rerun()
+            st.session_state.team_name = TEAM_PASSWORDS[st.session_state.password]
         else:
-            st.error("Invalid password. Please try again.")
+            st.session_state.login_error = "Invalid password. Please try again."
+    
+    if 'login_error' not in st.session_state:
+        st.session_state.login_error = None
+    
+    st.text_input("Team Password", type="password", key="password", on_change=handle_login)
+    if st.button("Login"):
+        handle_login()
+    
+    if st.session_state.login_error:
+        st.error(st.session_state.login_error)
+        st.session_state.login_error = None
+    
     st.stop()
 
 # Load team progress
@@ -272,6 +281,12 @@ if st.session_state.is_admin:
             st.write("No answers submitted yet.")
         
         st.markdown("---")
+    
+    # Add refresh button
+    if st.button("Refresh Data"):
+        team_progress = load_team_progress()
+        st.success("Data refreshed!")
+        st.rerun()
     
     # Clear data button
     if st.button("Clear All Team Data"):
