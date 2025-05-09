@@ -3,9 +3,66 @@ import json
 from PIL import Image
 import os
 
-# Initialize session state
+# Define valid team passwords
+TEAM_PASSWORDS = {
+    "team1pass": "Team 1",
+    "team2pass": "Team 2"
+}
+
+# Initialize session state for authentication
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'team_name' not in st.session_state:
+    st.session_state.team_name = None
+
+# Create data directory if it doesn't exist
+if not os.path.exists("data"):
+    os.makedirs("data")
+
+# Initialize or load team progress
+TEAM_PROGRESS_FILE = "data/team_progress.json"
+if not os.path.exists(TEAM_PROGRESS_FILE):
+    initial_progress = {
+        "teams": {
+            "Team 1": {"current_challenge": 0, "answers": {}},
+            "Team 2": {"current_challenge": 0, "answers": {}}
+        }
+    }
+    with open(TEAM_PROGRESS_FILE, "w") as f:
+        json.dump(initial_progress, f)
+
+def load_team_progress():
+    with open(TEAM_PROGRESS_FILE, "r") as f:
+        return json.load(f)
+
+def save_team_progress(progress):
+    with open(TEAM_PROGRESS_FILE, "w") as f:
+        json.dump(progress, f)
+
+# Login screen
+if not st.session_state.authenticated:
+    st.title("Helsinki City Tour Challenge")
+    st.write("Please enter your team password to begin:")
+    
+    password = st.text_input("Team Password", type="password")
+    if st.button("Login"):
+        if password in TEAM_PASSWORDS:
+            st.session_state.authenticated = True
+            st.session_state.team_name = TEAM_PASSWORDS[password]
+            st.rerun()
+        else:
+            st.error("Invalid password. Please try again.")
+    st.stop()
+
+# Load team progress
+team_progress = load_team_progress()
+current_team = st.session_state.team_name
+
+# Initialize session state with team's progress
 if 'current_challenge' not in st.session_state:
-    st.session_state.current_challenge = 0
+    st.session_state.current_challenge = team_progress["teams"][current_team]["current_challenge"]
+if 'answers' not in st.session_state:
+    st.session_state.answers = team_progress["teams"][current_team]["answers"]
 
 # Define challenges with UI configurations
 challenges = [
@@ -183,7 +240,14 @@ if not os.path.exists("uploads"):
 
 # App title and description
 st.title("Helsinki City Tour Challenge")
-st.write("Complete each challenge to explore Helsinki's most famous landmarks!")
+st.write(f"Welcome, {current_team}!")
+
+# Show other teams' progress
+st.sidebar.title("Team Progress")
+for team_name, team_data in team_progress["teams"].items():
+    if team_name != current_team:
+        st.sidebar.write(f"{team_name}: Challenge {team_data['current_challenge'] + 1} of {len(challenges)}")
+        st.sidebar.progress((team_data['current_challenge'] + 1) / len(challenges))
 
 # Display current challenge
 current = challenges[st.session_state.current_challenge]
@@ -194,10 +258,6 @@ st.subheader(f"Location: {current['location']}")
 st.write("Tasks:")
 for i, task in enumerate(current["tasks"], 1):
     st.write(f"{i}. {task}")
-
-# Initialize session state for storing answers if not exists
-if 'answers' not in st.session_state:
-    st.session_state.answers = {}
 
 # Dynamic UI rendering based on challenge configuration
 if 'ui_elements' in current:
@@ -211,7 +271,7 @@ if 'ui_elements' in current:
                 )
                 if uploaded_files:
                     for uploaded_file in uploaded_files:
-                        file_path = os.path.join("uploads", uploaded_file.name)
+                        file_path = os.path.join("uploads", f"{current_team}_{uploaded_file.name}")
                         with open(file_path, "wb") as f:
                             f.write(uploaded_file.getbuffer())
                         st.success(f"Saved {uploaded_file.name}")
@@ -223,6 +283,8 @@ if 'ui_elements' in current:
                     answer = st.text_input(config.get('label', "Enter your answer"))
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    save_team_progress(team_progress)
                     st.success("Answer saved!")
             
             elif element_type == 'number_input':
@@ -234,6 +296,8 @@ if 'ui_elements' in current:
                 )
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    save_team_progress(team_progress)
                     st.success("Answer saved!")
             
             elif element_type == 'radio':
@@ -243,12 +307,16 @@ if 'ui_elements' in current:
                 )
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    save_team_progress(team_progress)
                     st.success("Answer saved!")
             
             elif element_type == 'checkbox':
                 answer = st.checkbox(config.get('label', "Check if completed"))
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    save_team_progress(team_progress)
                     st.success("Answer saved!")
             
             elif element_type == 'selectbox':
@@ -258,6 +326,8 @@ if 'ui_elements' in current:
                 )
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    save_team_progress(team_progress)
                     st.success("Answer saved!")
             
             elif element_type == 'slider':
@@ -269,6 +339,8 @@ if 'ui_elements' in current:
                 )
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    save_team_progress(team_progress)
                     st.success("Answer saved!")
 
 # Navigation buttons
@@ -276,13 +348,23 @@ col1, col2 = st.columns(2)
 with col1:
     if st.button("Previous Challenge") and st.session_state.current_challenge > 0:
         st.session_state.current_challenge -= 1
+        team_progress["teams"][current_team]["current_challenge"] = st.session_state.current_challenge
+        save_team_progress(team_progress)
         st.rerun()
 
 with col2:
     if st.button("Next Challenge") and st.session_state.current_challenge < len(challenges) - 1:
         st.session_state.current_challenge += 1
+        team_progress["teams"][current_team]["current_challenge"] = st.session_state.current_challenge
+        save_team_progress(team_progress)
         st.rerun()
 
 # Progress indicator
 st.progress((st.session_state.current_challenge + 1) / len(challenges))
-st.write(f"Challenge {st.session_state.current_challenge + 1} of {len(challenges)}") 
+st.write(f"Challenge {st.session_state.current_challenge + 1} of {len(challenges)}")
+
+# Logout button
+if st.sidebar.button("Logout"):
+    st.session_state.authenticated = False
+    st.session_state.team_name = None
+    st.rerun() 
