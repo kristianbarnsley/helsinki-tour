@@ -7,7 +7,7 @@ import os
 if 'current_challenge' not in st.session_state:
     st.session_state.current_challenge = 0
 
-# Define challenges
+# Define challenges with UI configurations
 challenges = [
     {
         "title": "Helsinki Cathedral (Helsingin tuomiokirkko)",
@@ -15,7 +15,26 @@ challenges = [
             "Take a photo of the most hardcore apostle & explain why",
             "Find and record the year the Cathedral was completed"
         ],
-        "location": "Helsinki Cathedral"
+        "location": "Helsinki Cathedral",
+        "ui_elements": {
+            "file_upload": {
+                "enabled": True,
+                "types": ["jpg", "jpeg", "png"],
+                "multiple": True,
+                "label": "Upload your photos of the apostles"
+            },
+            "text_input": {
+                "enabled": True,
+                "type": "text_area",
+                "label": "Explain your choice of apostle"
+            },
+            "number_input": {
+                "enabled": True,
+                "label": "Enter the year the Cathedral was completed",
+                "min_value": 1800,
+                "max_value": 1900
+            }
+        }
     },
     {
         "title": "Market Square (Kauppatori)",
@@ -23,7 +42,27 @@ challenges = [
             "Find, picture and eat the 3 most Finnish snacks you can find (e.g., salmon soup, reindeer meat, or Karjalanpiirakka)",
             "Locate a food stall and discover the price of 'muikku' (small fried fish)"
         ],
-        "location": "Market Square"
+        "location": "Market Square",
+        "ui_elements": {
+            "file_upload": {
+                "enabled": True,
+                "types": ["jpg", "jpeg", "png"],
+                "multiple": True,
+                "label": "Upload photos of the snacks you tried"
+            },
+            "text_input": {
+                "enabled": True,
+                "type": "text_area",
+                "label": "Describe the snacks you tried"
+            },
+            "number_input": {
+                "enabled": True,
+                "label": "Enter the price of muikku (in euros)",
+                "min_value": 0.0,
+                "max_value": 50.0,
+                "step": 0.5
+            }
+        }
     },
     {
         "title": "Havis Amanda Fountain",
@@ -32,7 +71,25 @@ challenges = [
             "Ask a local about the tradition involving this fountain on May Day",
             "Take a video singing 'kiss from a rose' by Seal, with a Seal"
         ],
-        "location": "Havis Amanda Fountain"
+        "location": "Havis Amanda Fountain",
+        "ui_elements": {
+            "file_upload": {
+                "enabled": True,
+                "types": ["jpg", "jpeg", "png", "mp4"],
+                "multiple": True,
+                "label": "Upload your photos and videos"
+            },
+            "text_input": {
+                "enabled": True,
+                "type": "text_area",
+                "label": "Share what you learned about the May Day tradition"
+            },
+            "radio": {
+                "enabled": True,
+                "label": "What is the statue's nickname?",
+                "options": ["Manta", "Amanda", "Havis", "Seal"]
+            }
+        }
     },
     {
         "title": "Esplanadi Park (Esplanadin puisto)",
@@ -40,7 +97,20 @@ challenges = [
             "Find and photograph the statue of Finnish national poet Johan Ludvig Runeberg",
             "Bonus points: Identify the pastry named after him (Runeberg Torte)"
         ],
-        "location": "Esplanadi Park"
+        "location": "Esplanadi Park",
+        "ui_elements": {
+            "file_upload": {
+                "enabled": True,
+                "types": ["jpg", "jpeg", "png"],
+                "multiple": False,
+                "label": "Upload a photo with the statue"
+            },
+            "checkbox": {
+                "enabled": True,
+                "label": "Did you find the Runeberg Torte?",
+                "options": ["Yes, I found it!", "No, I couldn't find it"]
+            }
+        }
     },
     {
         "title": "Kappeli Restaurant",
@@ -48,7 +118,20 @@ challenges = [
             "Ask the bartender for a recommended Finnish drink to share. Take a photo with your drinks",
             "Bonus: Selfie with the bartender"
         ],
-        "location": "Kappeli Restaurant"
+        "location": "Kappeli Restaurant",
+        "ui_elements": {
+            "file_upload": {
+                "enabled": True,
+                "types": ["jpg", "jpeg", "png"],
+                "multiple": True,
+                "label": "Upload your drink photos"
+            },
+            "text_input": {
+                "enabled": True,
+                "type": "text_area",
+                "label": "What drink did you try? How was it?"
+            }
+        }
     },
     {
         "title": "Ateneum Art Museum",
@@ -56,14 +139,41 @@ challenges = [
             "Identify a famous Finnish artist whose works are exhibited here & record a Finnish person teaching you how to pronounce their name",
             "Bonus: Get creative: pose in the most interesting way outside the museum"
         ],
-        "location": "Ateneum Art Museum"
+        "location": "Ateneum Art Museum",
+        "ui_elements": {
+            "file_upload": {
+                "enabled": True,
+                "types": ["jpg", "jpeg", "png", "mp4"],
+                "multiple": True,
+                "label": "Upload your photos and videos"
+            },
+            "selectbox": {
+                "enabled": True,
+                "label": "Which Finnish artist did you learn about?",
+                "options": ["Akseli Gallen-Kallela", "Hugo Simberg", "Helene Schjerfbeck", "Albert Edelfelt", "Other"]
+            }
+        }
     },
     {
         "title": "Senate Square (Senaatintori)",
         "tasks": [
             "Return promptly to Senate Square. Extra points if your team arrives first!"
         ],
-        "location": "Senate Square"
+        "location": "Senate Square",
+        "ui_elements": {
+            "slider": {
+                "enabled": True,
+                "label": "How many minutes did it take you to return?",
+                "min_value": 0,
+                "max_value": 60,
+                "step": 1
+            },
+            "text_input": {
+                "enabled": True,
+                "type": "text_area",
+                "label": "Any final thoughts about the tour?"
+            }
+        }
     }
 ]
 
@@ -85,15 +195,81 @@ st.write("Tasks:")
 for i, task in enumerate(current["tasks"], 1):
     st.write(f"{i}. {task}")
 
-# File uploader for images/videos
-uploaded_files = st.file_uploader(
-    "Upload your photos/videos for this challenge",
-    type=["jpg", "jpeg", "png", "mp4"],
-    accept_multiple_files=True
-)
+# Initialize session state for storing answers if not exists
+if 'answers' not in st.session_state:
+    st.session_state.answers = {}
 
-# Text input for answers
-answers = st.text_area("Enter your answers/observations for this challenge")
+# Dynamic UI rendering based on challenge configuration
+if 'ui_elements' in current:
+    for element_type, config in current['ui_elements'].items():
+        if config.get('enabled', False):
+            if element_type == 'file_upload':
+                uploaded_files = st.file_uploader(
+                    config.get('label', "Upload your files"),
+                    type=config.get('types', ["jpg", "jpeg", "png"]),
+                    accept_multiple_files=config.get('multiple', False)
+                )
+                if uploaded_files:
+                    for uploaded_file in uploaded_files:
+                        file_path = os.path.join("uploads", uploaded_file.name)
+                        with open(file_path, "wb") as f:
+                            f.write(uploaded_file.getbuffer())
+                        st.success(f"Saved {uploaded_file.name}")
+            
+            elif element_type == 'text_input':
+                if config.get('type') == 'text_area':
+                    answer = st.text_area(config.get('label', "Enter your answer"))
+                else:
+                    answer = st.text_input(config.get('label', "Enter your answer"))
+                if answer:
+                    st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    st.success("Answer saved!")
+            
+            elif element_type == 'number_input':
+                answer = st.number_input(
+                    config.get('label', "Enter a number"),
+                    min_value=config.get('min_value', 0),
+                    max_value=config.get('max_value', 100),
+                    step=config.get('step', 1)
+                )
+                if answer:
+                    st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    st.success("Answer saved!")
+            
+            elif element_type == 'radio':
+                answer = st.radio(
+                    config.get('label', "Select an option"),
+                    options=config.get('options', [])
+                )
+                if answer:
+                    st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    st.success("Answer saved!")
+            
+            elif element_type == 'checkbox':
+                answer = st.checkbox(config.get('label', "Check if completed"))
+                if answer:
+                    st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    st.success("Answer saved!")
+            
+            elif element_type == 'selectbox':
+                answer = st.selectbox(
+                    config.get('label', "Select an option"),
+                    options=config.get('options', [])
+                )
+                if answer:
+                    st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    st.success("Answer saved!")
+            
+            elif element_type == 'slider':
+                answer = st.slider(
+                    config.get('label', "Select a value"),
+                    min_value=config.get('min_value', 0),
+                    max_value=config.get('max_value', 100),
+                    step=config.get('step', 1)
+                )
+                if answer:
+                    st.session_state.answers[f"{current['title']}_{element_type}"] = answer
+                    st.success("Answer saved!")
 
 # Navigation buttons
 col1, col2 = st.columns(2)
@@ -109,15 +285,4 @@ with col2:
 
 # Progress indicator
 st.progress((st.session_state.current_challenge + 1) / len(challenges))
-st.write(f"Challenge {st.session_state.current_challenge + 1} of {len(challenges)}")
-
-# Save uploaded files and answers
-if uploaded_files:
-    for uploaded_file in uploaded_files:
-        file_path = os.path.join("uploads", uploaded_file.name)
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        st.success(f"Saved {uploaded_file.name}")
-
-if answers:
-    st.success("Answers saved!") 
+st.write(f"Challenge {st.session_state.current_challenge + 1} of {len(challenges)}") 
