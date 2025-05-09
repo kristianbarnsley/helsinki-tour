@@ -245,9 +245,13 @@ st.write(f"Welcome, {current_team}!")
 # Show other teams' progress
 st.sidebar.title("Team Progress")
 for team_name, team_data in team_progress["teams"].items():
-    if team_name != current_team:
-        st.sidebar.write(f"{team_name}: Challenge {team_data['current_challenge'] + 1} of {len(challenges)}")
-        st.sidebar.progress((team_data['current_challenge'] + 1) / len(challenges))
+    st.sidebar.write(f"{team_name}: Challenge {team_data['current_challenge'] + 1} of {len(challenges)}")
+    st.sidebar.progress((team_data['current_challenge'] + 1) / len(challenges))
+
+# Add update button
+if st.sidebar.button("Refresh Progress"):
+    team_progress = load_team_progress()
+    st.rerun()
 
 # Display current challenge
 current = challenges[st.session_state.current_challenge]
