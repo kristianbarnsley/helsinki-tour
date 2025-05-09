@@ -253,7 +253,21 @@ if st.session_state.is_admin:
         if team_data['answers']:
             st.subheader("Answers:")
             for answer_key, answer_value in team_data['answers'].items():
-                st.write(f"**{answer_key}**: {answer_value}")
+                st.write(f"**{answer_key}**:")
+                # Check if the answer is a list of files (image uploads)
+                if isinstance(answer_value, list):
+                    for filename in answer_value:
+                        file_path = os.path.join("uploads", f"{team_name}_{filename}")
+                        if os.path.exists(file_path):
+                            try:
+                                image = Image.open(file_path)
+                                st.image(image, caption=filename, use_column_width=True)
+                            except Exception as e:
+                                st.write(f"Could not display {filename}: {str(e)}")
+                        else:
+                            st.write(f"File not found: {filename}")
+                else:
+                    st.write(answer_value)
         else:
             st.write("No answers submitted yet.")
         
@@ -284,6 +298,19 @@ if 'current_challenge' not in st.session_state:
     st.session_state.current_challenge = team_progress["teams"][st.session_state.team_name]["current_challenge"]
 if 'answers' not in st.session_state:
     st.session_state.answers = team_progress["teams"][st.session_state.team_name]["answers"]
+
+def validate_challenge_completion(challenge, answers):
+    """Check if all required fields for the current challenge are completed."""
+    missing_fields = []
+    challenge_key = challenge['title']
+    
+    for element_type, config in challenge['ui_elements'].items():
+        if config.get('enabled', False):
+            field_key = f"{challenge_key}_{element_type}"
+            if field_key not in answers or not answers[field_key]:
+                missing_fields.append(config.get('label', element_type))
+    
+    return missing_fields
 
 # App title and description
 st.title("Helsinki City Tour Challenge")
@@ -321,11 +348,23 @@ if 'ui_elements' in current:
                     accept_multiple_files=config.get('multiple', False)
                 )
                 if uploaded_files:
+                    # Convert to list if single file
+                    if not isinstance(uploaded_files, list):
+                        uploaded_files = [uploaded_files]
+                    
+                    # Save files and track in session state
+                    saved_files = []
                     for uploaded_file in uploaded_files:
                         file_path = os.path.join("uploads", f"{st.session_state.team_name}_{uploaded_file.name}")
                         with open(file_path, "wb") as f:
                             f.write(uploaded_file.getbuffer())
+                        saved_files.append(uploaded_file.name)
                         st.success(f"Saved {uploaded_file.name}")
+                    
+                    # Update session state with uploaded files
+                    st.session_state.answers[f"{current['title']}_{element_type}"] = saved_files
+                    team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
+                    save_team_progress(team_progress)
             
             elif element_type == 'text_input':
                 if config.get('type') == 'text_area':
@@ -404,7 +443,15 @@ with col1:
         st.rerun()
 
 with col2:
-    if st.button("Next Challenge") and st.session_state.current_challenge < len(challenges) - 1:
+    # Check if all required fields are completed
+    missing_fields = validate_challenge_completion(current, st.session_state.answers)
+    
+    if missing_fields:
+        st.warning("Please complete all required fields before proceeding:")
+        for field in missing_fields:
+            st.write(f"• {field}")
+    
+    if st.button("Next Challenge", disabled=bool(missing_fields)) and st.session_state.current_challenge < len(challenges) - 1:
         st.session_state.current_challenge += 1
         team_progress["teams"][st.session_state.team_name]["current_challenge"] = st.session_state.current_challenge
         save_team_progress(team_progress)
