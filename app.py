@@ -9,11 +9,15 @@ TEAM_PASSWORDS = {
     "team2pass": "Team 2"
 }
 
+ADMIN_PASSWORD = "adminpass"
+
 # Initialize session state for authentication
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 if 'team_name' not in st.session_state:
     st.session_state.team_name = None
+if 'is_admin' not in st.session_state:
+    st.session_state.is_admin = False
 
 # Create data directory if it doesn't exist
 if not os.path.exists("data"):
@@ -38,31 +42,6 @@ def load_team_progress():
 def save_team_progress(progress):
     with open(TEAM_PROGRESS_FILE, "w") as f:
         json.dump(progress, f)
-
-# Login screen
-if not st.session_state.authenticated:
-    st.title("Helsinki City Tour Challenge")
-    st.write("Please enter your team password to begin:")
-    
-    password = st.text_input("Team Password", type="password")
-    if st.button("Login"):
-        if password in TEAM_PASSWORDS:
-            st.session_state.authenticated = True
-            st.session_state.team_name = TEAM_PASSWORDS[password]
-            st.rerun()
-        else:
-            st.error("Invalid password. Please try again.")
-    st.stop()
-
-# Load team progress
-team_progress = load_team_progress()
-current_team = st.session_state.team_name
-
-# Initialize session state with team's progress
-if 'current_challenge' not in st.session_state:
-    st.session_state.current_challenge = team_progress["teams"][current_team]["current_challenge"]
-if 'answers' not in st.session_state:
-    st.session_state.answers = team_progress["teams"][current_team]["answers"]
 
 # Define challenges with UI configurations
 challenges = [
@@ -238,9 +217,77 @@ challenges = [
 if not os.path.exists("uploads"):
     os.makedirs("uploads")
 
+# Login screen
+if not st.session_state.authenticated:
+    st.title("Helsinki City Tour Challenge")
+    st.write("Please enter your team password to begin:")
+    
+    password = st.text_input("Team Password", type="password")
+    if st.button("Login"):
+        if password == ADMIN_PASSWORD:
+            st.session_state.authenticated = True
+            st.session_state.is_admin = True
+            st.rerun()
+        elif password in TEAM_PASSWORDS:
+            st.session_state.authenticated = True
+            st.session_state.team_name = TEAM_PASSWORDS[password]
+            st.rerun()
+        else:
+            st.error("Invalid password. Please try again.")
+    st.stop()
+
+# Load team progress
+team_progress = load_team_progress()
+
+# Admin view
+if st.session_state.is_admin:
+    st.title("Admin Dashboard")
+    
+    # Display team progress
+    for team_name, team_data in team_progress["teams"].items():
+        st.header(f"Team: {team_name}")
+        st.write(f"Current Challenge: {team_data['current_challenge'] + 1} of {len(challenges)}")
+        st.progress((team_data['current_challenge'] + 1) / len(challenges))
+        
+        # Display answers
+        if team_data['answers']:
+            st.subheader("Answers:")
+            for answer_key, answer_value in team_data['answers'].items():
+                st.write(f"**{answer_key}**: {answer_value}")
+        else:
+            st.write("No answers submitted yet.")
+        
+        st.markdown("---")
+    
+    # Clear data button
+    if st.button("Clear All Team Data"):
+        initial_progress = {
+            "teams": {
+                "Team 1": {"current_challenge": 0, "answers": {}},
+                "Team 2": {"current_challenge": 0, "answers": {}}
+            }
+        }
+        save_team_progress(initial_progress)
+        st.success("All team data has been cleared!")
+        st.rerun()
+    
+    # Logout button
+    if st.sidebar.button("Logout"):
+        st.session_state.authenticated = False
+        st.session_state.is_admin = False
+        st.rerun()
+    
+    st.stop()
+
+# Initialize session state with team's progress
+if 'current_challenge' not in st.session_state:
+    st.session_state.current_challenge = team_progress["teams"][st.session_state.team_name]["current_challenge"]
+if 'answers' not in st.session_state:
+    st.session_state.answers = team_progress["teams"][st.session_state.team_name]["answers"]
+
 # App title and description
 st.title("Helsinki City Tour Challenge")
-st.write(f"Welcome, {current_team}!")
+st.write(f"Welcome, {st.session_state.team_name}!")
 
 # Show other teams' progress
 st.sidebar.title("Team Progress")
@@ -275,7 +322,7 @@ if 'ui_elements' in current:
                 )
                 if uploaded_files:
                     for uploaded_file in uploaded_files:
-                        file_path = os.path.join("uploads", f"{current_team}_{uploaded_file.name}")
+                        file_path = os.path.join("uploads", f"{st.session_state.team_name}_{uploaded_file.name}")
                         with open(file_path, "wb") as f:
                             f.write(uploaded_file.getbuffer())
                         st.success(f"Saved {uploaded_file.name}")
@@ -287,7 +334,7 @@ if 'ui_elements' in current:
                     answer = st.text_input(config.get('label', "Enter your answer"))
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
-                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
                     save_team_progress(team_progress)
                     st.success("Answer saved!")
             
@@ -300,7 +347,7 @@ if 'ui_elements' in current:
                 )
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
-                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
                     save_team_progress(team_progress)
                     st.success("Answer saved!")
             
@@ -311,7 +358,7 @@ if 'ui_elements' in current:
                 )
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
-                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
                     save_team_progress(team_progress)
                     st.success("Answer saved!")
             
@@ -319,7 +366,7 @@ if 'ui_elements' in current:
                 answer = st.checkbox(config.get('label', "Check if completed"))
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
-                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
                     save_team_progress(team_progress)
                     st.success("Answer saved!")
             
@@ -330,7 +377,7 @@ if 'ui_elements' in current:
                 )
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
-                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
                     save_team_progress(team_progress)
                     st.success("Answer saved!")
             
@@ -343,7 +390,7 @@ if 'ui_elements' in current:
                 )
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
-                    team_progress["teams"][current_team]["answers"] = st.session_state.answers
+                    team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
                     save_team_progress(team_progress)
                     st.success("Answer saved!")
 
@@ -352,14 +399,14 @@ col1, col2 = st.columns(2)
 with col1:
     if st.button("Previous Challenge") and st.session_state.current_challenge > 0:
         st.session_state.current_challenge -= 1
-        team_progress["teams"][current_team]["current_challenge"] = st.session_state.current_challenge
+        team_progress["teams"][st.session_state.team_name]["current_challenge"] = st.session_state.current_challenge
         save_team_progress(team_progress)
         st.rerun()
 
 with col2:
     if st.button("Next Challenge") and st.session_state.current_challenge < len(challenges) - 1:
         st.session_state.current_challenge += 1
-        team_progress["teams"][current_team]["current_challenge"] = st.session_state.current_challenge
+        team_progress["teams"][st.session_state.team_name]["current_challenge"] = st.session_state.current_challenge
         save_team_progress(team_progress)
         st.rerun()
 
