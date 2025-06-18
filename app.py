@@ -545,7 +545,7 @@ if st.sidebar.button("Refresh Progress"):
 
 # Display current challenge
 current = challenges[st.session_state.current_challenge]
-st.header(f"Stage {st.session_state.current_challenge + 1}: {current['title']}")
+st.header(f"{current['title']}")
 if 'location' in current:
     location_html = f'<a href="{current["location_link"]}" target="_blank" style="text-decoration: none; color: inherit;"><span style="display: inline-flex; align-items: center; gap: 5px;"><i class="fas fa-map-marker-alt"></i> {current["location"]}</span></a>'
     st.markdown(location_html, unsafe_allow_html=True)
