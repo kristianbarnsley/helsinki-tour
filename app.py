@@ -487,8 +487,36 @@ if st.session_state.is_admin:
         team_progress = load_team_progress()
         st.success("Data refreshed!")
         st.rerun()
+     # Download uploads folder button
+    if st.button("Prepare Download"):
+        import zipfile
+        import io
+        
+        # Create a zip file in memory
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            uploads_dir = "uploads"
+            if os.path.exists(uploads_dir):
+                for root, dirs, files in os.walk(uploads_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        # Add file to zip with relative path
+                        arcname = os.path.relpath(file_path, uploads_dir)
+                        zip_file.write(file_path, arcname)
+        
+        # Prepare the zip file for download
+        zip_buffer.seek(0)
+        
+        # Create download button
+        st.download_button(
+            label="Download Uploads ZIP",
+            data=zip_buffer.getvalue(),
+            file_name="uploads.zip"
+        )
     
     # Clear data button
+    st.write("DANGER ZONE")
     if st.button("Clear All Team Data"):
         initial_progress = {
             "teams": {
@@ -606,7 +634,7 @@ if 'ui_elements' in current:
                     # Update session state with uploaded files
                     st.session_state.answers[f"{current['title']}_{element_type}"] = saved_files
                     team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
-                    save_team_progress(team_progress)
+                    #save_team_progress(team_progress)
             
             elif element_type == 'text_input':
                 if config.get('type') == 'text_area':
@@ -616,8 +644,8 @@ if 'ui_elements' in current:
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
                     team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
-                    save_team_progress(team_progress)
-                    st.success("Answer saved!")
+                    #save_team_progress(team_progress)
+                    #st.success("Answer saved!")
             
             elif element_type == 'number_input':
                 answer = st.number_input(
@@ -629,8 +657,8 @@ if 'ui_elements' in current:
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
                     team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
-                    save_team_progress(team_progress)
-                    st.success("Answer saved!")
+                    #save_team_progress(team_progress)
+                    #st.success("Answer saved!")
             
             elif element_type == 'radio':
                 answer = st.radio(
@@ -640,16 +668,16 @@ if 'ui_elements' in current:
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
                     team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
-                    save_team_progress(team_progress)
-                    st.success("Answer saved!")
+                    #save_team_progress(team_progress)
+                    #st.success("Answer saved!")
             
             elif element_type == 'checkbox':
                 answer = st.checkbox(config.get('label', "Check if completed"))
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
                     team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
-                    save_team_progress(team_progress)
-                    st.success("Answer saved!")
+                    #save_team_progress(team_progress)
+                    #st.success("Answer saved!")
             
             elif element_type == 'selectbox':
                 answer = st.selectbox(
@@ -659,8 +687,8 @@ if 'ui_elements' in current:
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
                     team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
-                    save_team_progress(team_progress)
-                    st.success("Answer saved!")
+                    #save_team_progress(team_progress)
+                    #st.success("Answer saved!")
             
             elif element_type == 'slider':
                 answer = st.slider(
@@ -672,17 +700,18 @@ if 'ui_elements' in current:
                 if answer:
                     st.session_state.answers[f"{current['title']}_{element_type}"] = answer
                     team_progress["teams"][st.session_state.team_name]["answers"] = st.session_state.answers
-                    save_team_progress(team_progress)
-                    st.success("Answer saved!")
+                    #save_team_progress(team_progress)
+                    #st.success("Answer saved!")
 
 # Navigation buttons
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("Previous") and st.session_state.current_challenge > 0:
-        st.session_state.current_challenge -= 1
-        team_progress["teams"][st.session_state.team_name]["current_challenge"] = st.session_state.current_challenge
-        save_team_progress(team_progress)
-        st.rerun()
+    if st.session_state.current_challenge > 0:
+        if st.button("Previous"):
+            st.session_state.current_challenge -= 1
+            team_progress["teams"][st.session_state.team_name]["current_challenge"] = st.session_state.current_challenge
+            save_team_progress(team_progress)
+            st.rerun()
 
 with col2:
     # Check if all required fields are completed
