@@ -678,7 +678,7 @@ if 'ui_elements' in current:
 # Navigation buttons
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("Previous Challenge") and st.session_state.current_challenge > 0:
+    if st.button("Previous") and st.session_state.current_challenge > 0:
         st.session_state.current_challenge -= 1
         team_progress["teams"][st.session_state.team_name]["current_challenge"] = st.session_state.current_challenge
         save_team_progress(team_progress)
@@ -693,7 +693,7 @@ with col2:
         for field in missing_fields:
             st.write(f"• {field}")
     
-    if st.button("Next Challenge", disabled=bool(missing_fields)) and st.session_state.current_challenge < len(challenges) - 1:
+    if st.button("Next", disabled=bool(missing_fields)) and st.session_state.current_challenge < len(challenges) - 1:
         st.session_state.current_challenge += 1
         team_progress["teams"][st.session_state.team_name]["current_challenge"] = st.session_state.current_challenge
         save_team_progress(team_progress)
