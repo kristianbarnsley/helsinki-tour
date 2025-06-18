@@ -165,7 +165,7 @@ challenges = [
         "ui_elements":{
             "file_upload": {
                 "enabled": True,
-                "types": ["mp4", "jpg", "jpeg", "png"],
+                "types": ["mp4", "mov", "jpg", "jpeg", "png"],
                 "multiple": True,
                 "label": "Upload a video of your performance and any bonuses"
             },
@@ -193,7 +193,7 @@ challenges = [
         "ui_elements":{
             "file_upload": {
                 "enabled": True,
-                "types": ["mp4", "jpg", "jpeg", "png"],
+                "types": ["mp4", "mov", "jpg", "jpeg", "png"],
                 "multiple": True,
                 "label": "Upload a video of your performance"
             },
@@ -224,7 +224,7 @@ challenges = [
         "ui_elements":{
             "file_upload": {
                 "enabled": True,
-                "types": ["mp4"],
+                "types": ["mp4", "mov"],
                 "multiple": True,
                 "label": "Upload a video of your monolouge"
             },
@@ -246,7 +246,7 @@ challenges = [
         "ui_elements":{
             "file_upload": {
                 "enabled": True,
-                "types": ["mp4", "jpg", "jpeg", "png"],
+                "types": ["mp4", "mov", "jpg", "jpeg", "png"],
                 "multiple": True,
                 "label": "Upload your photos"
             },
@@ -344,7 +344,7 @@ challenges = [
         "ui_elements":{
             "file_upload": {
                 "enabled": True,
-                "types": ["mp4"],
+                "types": ["mp4", "mov"],
                 "multiple": True,
                 "label": "Upload a video of your pitch"
             },
@@ -386,7 +386,7 @@ challenges = [
         "ui_elements":{
             "file_upload": {
                 "enabled": True,
-                "types": ["mp4", "jpg", "jpeg", "png"],
+                "types": ["mp4", "mov", "jpg", "jpeg", "png"],
                 "multiple": True,
                 "label": "Upload a video of your performance"
             },
