@@ -10,11 +10,11 @@ st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs
 
 # Define valid team passwords
 TEAM_PASSWORDS = {
-    "team1pass": "Team 1",
-    "team2pass": "Team 2"
+    "dillydilly": "Team 1",
+    "got2go": "Team 2"
 }
 
-ADMIN_PASSWORD = "adminpass"
+ADMIN_PASSWORD = "adminz"
 
 # Initialize session state for authentication
 if 'authenticated' not in st.session_state:
@@ -487,6 +487,26 @@ if st.session_state.is_admin:
         team_progress = load_team_progress()
         st.success("Data refreshed!")
         st.rerun()
+
+     # Admin control: Set current challenge for each team
+    st.subheader("Set Team Challenge Progress")
+    for team_name, team_data in team_progress["teams"].items():
+        st.markdown(f"**{team_name}**")
+        current_challenge = team_data["current_challenge"]
+        new_challenge = st.number_input(
+            f"Set current challenge for {team_name}",
+            min_value=0,
+            max_value=len(challenges)-1,
+            value=current_challenge,
+            key=f"set_challenge_{team_name}"
+         )
+        if st.button(f"Update {team_name} Challenge", key=f"update_{team_name}"):
+            if new_challenge != current_challenge:
+                team_progress["teams"][team_name]["current_challenge"] = new_challenge
+                save_team_progress(team_progress)
+                st.success(f"{team_name} challenge updated to {new_challenge + 1}")
+                st.rerun()
+    
      # Download uploads folder button
     if st.button("Prepare Download"):
         import zipfile
